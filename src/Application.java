@@ -223,15 +223,32 @@ public class Application extends JFrame {
             double step = Double.parseDouble((String) args.get(0));
             double min = Double.parseDouble((String) args.get(1));
             double max = Double.parseDouble((String) args.get(2));
-            double inResult = 0;
-            double i;
-            for (i = min; i <= max - step * 2; i += step) {
-                inResult += (Math.sin(i) + Math.sin(i + step)) * step / 2;
+
+            int lenModStep = (int) ((int) (max - Math.abs(min)) % step);
+            int stepsCount = (int) ((int) (max - Math.abs(min)) / step);
+            int threadCount = (lenModStep == 0 ? Math.min(stepsCount, 3) : stepsCount + 1 > 3 ? 3 : stepsCount);
+
+            ResultResource rs = new ResultResource(defaultTableModel, data, selectedRow);
+            defaultTableModel.setValueAt(0,selectedRow, 3);
+            data.get(selectedRow).setDataByIndex(3, String.valueOf(0));
+
+            List<CalculationThread> threads = new ArrayList<>();
+            if (threadCount == 3) {
+                int steps = stepsCount / 3;
+                threads.add(new CalculationThread(min, min + steps * step, step, rs));
+                threads.add(
+                        new CalculationThread(min + steps * step, min + steps * 2 * step, step,
+                                rs));
+                threads.add(new CalculationThread(min + steps * 2 * step, max, step, rs));
+            } else if (threadCount == 2) {
+                int steps = stepsCount / 2;
+                threads.add(new CalculationThread(min, min + steps * step, step, rs));
+                threads.add(new CalculationThread(min + steps * step, max, step, rs));
+            } else {
+                threads.add(new CalculationThread(min, max, step, rs));
             }
-            inResult += (Math.sin(max) + Math.sin(i)) * (max - i) / 2;
-            defaultTableModel.setValueAt(inResult, selectedRow, NON_EDITABLE_COLUMN);
-            data.get(selectedRow)
-                    .set(NON_EDITABLE_COLUMN, String.valueOf(inResult));
+
+            threads.forEach(CalculationThread::start);
         }
     }
 

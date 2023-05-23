@@ -7,6 +7,7 @@ public class RecIntegral {
 
     public RecIntegral(List<String> data) {
         this.data = new ArrayList<>(data);
+        if(this.data.size()==3){this.data.add("0");}
     }
 
     public void set(int index, String data) {
@@ -25,6 +26,9 @@ public class RecIntegral {
         return new RecIntegral(localstring);
     }
 
+    public void setDataByIndex(int index, String record) {
+        this.data.set(index, record);
+    }
     @Override
     public String toString() {
         return "RecIntegral{" +
