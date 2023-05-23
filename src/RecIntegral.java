@@ -16,4 +16,19 @@ public class RecIntegral {
     public List<String> getData() {
         return data;
     }
+
+    public static RecIntegral fromString(String inputData) {
+        StringBuffer sb =new StringBuffer(inputData);
+        sb.delete(0,20);
+        sb.delete(sb.length()-2,sb.length());
+        List<String> localstring = List.of(sb.toString().split(", "));
+        return new RecIntegral(localstring);
+    }
+
+    @Override
+    public String toString() {
+        return "RecIntegral{" +
+                "data=" + data +
+                '}';
+    }
 }

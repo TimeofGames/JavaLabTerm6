@@ -1,9 +1,11 @@
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -23,6 +25,10 @@ public class Application extends JFrame {
     private JPanel rootPanel;
     private JButton deleteTableButton;
     private JButton uploadButton;
+    private JButton saveBinaryButton;
+    private JButton saveTextButton;
+    private JButton loadingBinaryButton;
+    private JButton loadingTextButton;
     private DefaultTableModel defaultTableModel;
     private List<RecIntegral> data;
 
@@ -38,6 +44,11 @@ public class Application extends JFrame {
         defaultTableModel.addTableModelListener(new ChangeTableListener());
         deleteTableButton.addActionListener(new DeleteTableListener());
         uploadButton.addActionListener(new UploadTableListener());
+
+        saveBinaryButton.addActionListener(new SaveBinaryButtonActionListener());
+        loadingBinaryButton.addActionListener(new LoadingBinaryButtonActionListener());
+        saveTextButton.addActionListener(new SaveTextActionListener());
+        loadingTextButton.addActionListener(new LoadingTextButtonActionListener());
     }
 
     public static void main(String[] args) {
@@ -67,6 +78,98 @@ public class Application extends JFrame {
         return arg > 0.000001 && arg < 1000000;
     }
 
+    private class SaveBinaryButtonActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ObjectOutputStream out = null;
+            int temp = table.getSelectedRow();
+            if (temp == -1) {
+                return;
+            }
+            try {
+                out = new ObjectOutputStream(new BufferedOutputStream(
+                        new FileOutputStream("BinaryStringNumber" + temp + ".txt")));
+                out.writeObject(data.get(temp));
+                out.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    private class LoadingBinaryButtonActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView()
+                    .getHomeDirectory());
+            fileChooser.showOpenDialog(null);
+            ObjectInputStream in = null;
+            RecIntegral restObj = null;
+            int temp = table.getRowCount();
+            if (temp != -1) {
+                for (int i = 0; i < temp; i++) {
+                    defaultTableModel.removeRow(0);
+                }
+            }
+            try {
+                in = new ObjectInputStream(new BufferedInputStream(
+                        new FileInputStream(fileChooser.getSelectedFile()
+                                .getAbsolutePath())));
+                restObj = (RecIntegral) in.readObject();
+                data.add(restObj);
+                defaultTableModel.addRow((Vector<?>) restObj.getData());
+            } catch (IOException | ClassNotFoundException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private class SaveTextActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ObjectOutputStream out = null;
+            int temp = table.getSelectedRow();
+            if (temp == -1) {
+                return;
+            }
+            try {
+                out = new ObjectOutputStream(new BufferedOutputStream(
+                        new FileOutputStream("TextStringNumber" + temp + ".txt")));
+                out.writeObject(data.get(temp)
+                        .toString());
+                out.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    private class LoadingTextButtonActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView()
+                    .getDefaultDirectory());
+            fileChooser.showOpenDialog(null);
+            ObjectInputStream in = null;
+            RecIntegral restObj = null;
+            int temp = table.getRowCount();
+            if (temp != -1) {
+                for (int i = 0; i < temp; i++) {
+                    defaultTableModel.removeRow(0);
+                }
+            }
+            try {
+                in = new ObjectInputStream(new BufferedInputStream(
+                        new FileInputStream(fileChooser.getSelectedFile()
+                                .getAbsolutePath())));
+                restObj = RecIntegral.fromString((String) in.readObject());
+                data.add(restObj);
+                defaultTableModel.addRow((Vector<?>) restObj.getData());
+
+            } catch (IOException | ClassNotFoundException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
     private class AddButtonActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -91,8 +194,7 @@ public class Application extends JFrame {
                     maxTextField.setText("");
                     throw new WrongInputException();
                 }
-            }
-            catch (WrongInputException exc){
+            } catch (WrongInputException exc) {
                 new WrongInputDialog();
             }
         }
