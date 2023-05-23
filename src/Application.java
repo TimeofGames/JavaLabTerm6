@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Vector;
 
 public class Application extends JFrame {
-    private static final List<String> tableHeader = List.of(new String[]{ "step", "min", "max", "result"});
+    private static final List<String> tableHeader = List.of(new String[]{"step", "min", "max", "result"});
     private static final List<List<String>> startData = List.of(List.of(new String[]{"0.01", "1", "5"}),
             List.of(new String[]{"0.001", "-2", "5"}));
     private static final int NON_EDITABLE_COLUMN = 3;
@@ -63,27 +63,37 @@ public class Application extends JFrame {
         this.data.add(new RecIntegral(data));
     }
 
+    private boolean inRange(double arg) {
+        return arg > 0.000001 && arg < 1000000;
+    }
+
     private class AddButtonActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             List<String> row = new ArrayList<>();
-            String regex = "-?\\d*+(\\.\\d+)?";
-            if ((!stepTextField.getText()
-                    .isEmpty() && stepTextField.getText()
-                    .matches(regex)) &&
-                    (!minTextField.getText()
-                            .isEmpty() && minTextField.getText()
-                            .matches(regex)) &&
-                    (!maxTextField.getText()
-                            .isEmpty() && maxTextField.getText()
-                            .matches(regex))) {
-                row.add(stepTextField.getText());
-                stepTextField.setText("");
-                row.add(minTextField.getText());
-                minTextField.setText("");
-                row.add(maxTextField.getText());
-                maxTextField.setText("");
-                addRow(row);
+            try {
+                if ((!stepTextField.getText()
+                        .isEmpty() && inRange(Double.parseDouble(stepTextField.getText()))) &&
+                        (!minTextField.getText()
+                                .isEmpty() && inRange(Double.parseDouble(minTextField.getText()))) &&
+                        (!maxTextField.getText()
+                                .isEmpty() && inRange(Double.parseDouble(maxTextField.getText())))) {
+                    row.add(stepTextField.getText());
+                    stepTextField.setText("");
+                    row.add(minTextField.getText());
+                    minTextField.setText("");
+                    row.add(maxTextField.getText());
+                    maxTextField.setText("");
+                    addRow(row);
+                } else {
+                    stepTextField.setText("");
+                    minTextField.setText("");
+                    maxTextField.setText("");
+                    throw new WrongInputException();
+                }
+            }
+            catch (WrongInputException exc){
+                new WrongInputDialog();
             }
         }
     }
@@ -152,7 +162,8 @@ public class Application extends JFrame {
             for (int i = 0; i < items; i++) {
                 defaultTableModel.removeRow(0);
             }
-            data.forEach(i -> defaultTableModel.addRow(i.getData().toArray()));
+            data.forEach(i -> defaultTableModel.addRow(i.getData()
+                    .toArray()));
         }
     }
 }
