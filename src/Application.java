@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Vector;
 
 public class Application extends JFrame {
@@ -82,14 +83,10 @@ public class Application extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             ObjectOutputStream out = null;
-            int temp = table.getSelectedRow();
-            if (temp == -1) {
-                return;
-            }
             try {
                 out = new ObjectOutputStream(new BufferedOutputStream(
-                        new FileOutputStream("BinaryStringNumber" + temp + ".txt")));
-                out.writeObject(data.get(temp));
+                        new FileOutputStream("BinaryStringNumber" + ".txt")));
+                out.writeObject(data);
                 out.close();
             } catch (IOException ignored) {
             }
@@ -103,7 +100,6 @@ public class Application extends JFrame {
                     .getHomeDirectory());
             fileChooser.showOpenDialog(null);
             ObjectInputStream in = null;
-            RecIntegral restObj = null;
             int temp = table.getRowCount();
             if (temp != -1) {
                 for (int i = 0; i < temp; i++) {
@@ -114,9 +110,8 @@ public class Application extends JFrame {
                 in = new ObjectInputStream(new BufferedInputStream(
                         new FileInputStream(fileChooser.getSelectedFile()
                                 .getAbsolutePath())));
-                restObj = (RecIntegral) in.readObject();
-                data.add(restObj);
-                defaultTableModel.addRow((Vector<?>) restObj.getData());
+                ArrayList<RecIntegral> local = (ArrayList<RecIntegral>) in.readObject();
+                local.forEach(i -> addRow(i.getData()));
             } catch (IOException | ClassNotFoundException ex) {
                 ex.printStackTrace();
             }
@@ -126,16 +121,15 @@ public class Application extends JFrame {
     private class SaveTextActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            ObjectOutputStream out = null;
-            int temp = table.getSelectedRow();
-            if (temp == -1) {
-                return;
-            }
+            BufferedOutputStream out = null;
             try {
-                out = new ObjectOutputStream(new BufferedOutputStream(
-                        new FileOutputStream("TextStringNumber" + temp + ".txt")));
-                out.writeObject(data.get(temp)
-                        .toString());
+                out = new BufferedOutputStream(
+                        new FileOutputStream("TextStringNumber" + ".txt"));
+                for (RecIntegral ri : data) {
+                    out.write((ri.toString() + "\n")
+                            .getBytes());
+                }
+                out.flush();
                 out.close();
             } catch (IOException ignored) {
             }
@@ -148,7 +142,7 @@ public class Application extends JFrame {
             JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView()
                     .getDefaultDirectory());
             fileChooser.showOpenDialog(null);
-            ObjectInputStream in = null;
+            Scanner in = null;
             RecIntegral restObj = null;
             int temp = table.getRowCount();
             if (temp != -1) {
@@ -156,15 +150,16 @@ public class Application extends JFrame {
                     defaultTableModel.removeRow(0);
                 }
             }
+            data = new ArrayList<>();
             try {
-                in = new ObjectInputStream(new BufferedInputStream(
-                        new FileInputStream(fileChooser.getSelectedFile()
-                                .getAbsolutePath())));
-                restObj = RecIntegral.fromString((String) in.readObject());
-                data.add(restObj);
-                defaultTableModel.addRow((Vector<?>) restObj.getData());
+                in = new Scanner(new InputStreamReader(new FileInputStream(fileChooser.getSelectedFile()
+                        .getAbsolutePath())));
+                while (in.hasNextLine()) {
+                    restObj = RecIntegral.fromString(in.nextLine());
+                    addRow(restObj.getData());
+                }
 
-            } catch (IOException | ClassNotFoundException ex) {
+            } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
@@ -229,8 +224,9 @@ public class Application extends JFrame {
             int threadCount = (lenModStep == 0 ? Math.min(stepsCount, 3) : stepsCount + 1 > 3 ? 3 : stepsCount);
 
             ResultResource rs = new ResultResource(defaultTableModel, data, selectedRow);
-            defaultTableModel.setValueAt(0,selectedRow, 3);
-            data.get(selectedRow).setDataByIndex(3, String.valueOf(0));
+            defaultTableModel.setValueAt(0, selectedRow, 3);
+            data.get(selectedRow)
+                    .setDataByIndex(3, String.valueOf(0));
 
             List<CalculationThread> threads = new ArrayList<>();
             if (threadCount == 3) {
