@@ -3,37 +3,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RecIntegral implements Serializable {
-
-    private List<String> data;
-
-    public RecIntegral(List<String> data) {
-        this.data = new ArrayList<>(data);
-        if(this.data.size()==3){this.data.add("0");}
-    }
-
-    public void set(int index, String data) {
-        this.data.set(index,data);
-    }
-
-    public List<String> getData() {
-        return data;
-    }
-
+    private List<String> record;
     public static RecIntegral fromString(String inputData) {
         StringBuffer sb =new StringBuffer(inputData);
-        sb.delete(0,18);
+        sb.delete(0,20);
         sb.delete(sb.length()-2,sb.length());
         List<String> localstring = List.of(sb.toString().split(", "));
         return new RecIntegral(localstring);
     }
-
-    public void setDataByIndex(int index, String record) {
-        this.data.set(index, record);
-    }
     @Override
     public String toString() {
         return "RecIntegral{" +
-                "data=" + data +
+                "record=" + record +
                 '}';
+    }
+    public List<String> getRecord() {
+        return record;
+    }
+    public void setRecord(List<String> record) {
+        this.record = record;
+    }
+    public void setDataByIndex(int index, String record) {
+        this.record.set(index, record);
+    }
+    public RecIntegral(List<String> record){
+        this.record = new ArrayList<>(record);
     }
 }

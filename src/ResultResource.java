@@ -3,37 +3,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ResultResource {
-    int selectedRow;
-    private DefaultTableModel model;
-    private List<RecIntegral> data = new ArrayList<>();
+    private double result;
+    private int changeCount;
 
-    public ResultResource(DefaultTableModel model, List<RecIntegral> data , int selectedRow) {
-        this.model = model;
-        this.data = data;
-        this.selectedRow = selectedRow;
+    public ResultResource() {
+        this.result = 0;
+        this.changeCount = 0;
     }
 
-    public int getSelectedRow() {
-        return selectedRow;
+    public double getResult() {
+        return result;
     }
 
-    public void setSelectedRow(int selectedRow) {
-        this.selectedRow = selectedRow;
+    public void setResult(double result) {
+        this.result = result;
     }
 
-    public DefaultTableModel getModel() {
-        return model;
+    public int getChangeCount() {
+        return changeCount;
     }
 
-    public void setModel(DefaultTableModel model) {
-        this.model = model;
-    }
-
-    public List<RecIntegral> getData() {
-        return data;
-    }
-
-    public void setData(List<RecIntegral> data) {
-        this.data = data;
+    public void setChangeCount(int changeCount) {
+        this.changeCount = changeCount;
     }
 }

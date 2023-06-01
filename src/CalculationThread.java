@@ -22,11 +22,8 @@ public class CalculationThread extends Thread {
         }
 
         synchronized (result) {
-            result.getModel().setValueAt(
-                     Double.parseDouble(String.valueOf(result.getModel().getDataVector().get(result.getSelectedRow()).get(3))) + localResult,
-                    result.getSelectedRow(), 3);
-            result.getData().get(result.getSelectedRow()).setDataByIndex(3,
-                    result.getData().get(result.getSelectedRow()).getData().get(3) + localResult);
+            result.setChangeCount(result.getChangeCount() + 1);
+            result.setResult(result.getResult() + localResult);
         }
 
     }
