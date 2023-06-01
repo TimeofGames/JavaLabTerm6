@@ -5,7 +5,10 @@ import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.*;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -13,8 +16,7 @@ import java.util.Vector;
 
 public class Application extends JFrame {
     private static final List<String> tableHeader = List.of(new String[]{"step", "min", "max", "result"});
-    private static final List<List<String>> startData = List.of(List.of(new String[]{"0.01", "1", "5"}),
-            List.of(new String[]{"0.001", "-2", "5"}));
+    private static final List<List<String>> startData = List.of(List.of(new String[]{"0.01", "1", "5"}));
     private static final int NON_EDITABLE_COLUMN = 3;
     private JTextField stepTextField;
     private JTextField minTextField;
@@ -33,12 +35,16 @@ public class Application extends JFrame {
     private DefaultTableModel defaultTableModel;
     private List<RecIntegral> data;
 
-    public Application() {
+    private UDPThread server;
+
+    public Application() throws SocketException {
         super("Lab_1");
         setContentPane(rootPanel);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
         setSize(800, 600);
+        server = new UDPThread();
+        server.start();
         addButton.addActionListener(new AddButtonActionListener());
         deleteButton.addActionListener(new DeleteButtonActionListener());
         calculateButton.addActionListener(new CalculateButtonActionListener());
@@ -50,9 +56,50 @@ public class Application extends JFrame {
         loadingBinaryButton.addActionListener(new LoadingBinaryButtonActionListener());
         saveTextButton.addActionListener(new SaveTextActionListener());
         loadingTextButton.addActionListener(new LoadingTextButtonActionListener());
+
+        addWindowListener(new WindowListener() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try {
+                    server.sendEnd();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowIconified(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowDeiconified(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowActivated(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowDeactivated(WindowEvent e) {
+
+            }
+        });
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SocketException {
         new Application();
     }
 
@@ -219,32 +266,21 @@ public class Application extends JFrame {
             double min = Double.parseDouble((String) args.get(1));
             double max = Double.parseDouble((String) args.get(2));
 
-            int lenModStep = (int) ((int) (max - Math.abs(min)) % step);
-            int stepsCount = (int) ((int) (max - Math.abs(min)) / step);
-            int threadCount = (lenModStep == 0 ? Math.min(stepsCount, 3) : stepsCount + 1 > 3 ? 3 : stepsCount);
-
-            ResultResource rs = new ResultResource(defaultTableModel, data, selectedRow);
-            defaultTableModel.setValueAt(0, selectedRow, 3);
-            data.get(selectedRow)
-                    .setDataByIndex(3, String.valueOf(0));
-
-            List<CalculationThread> threads = new ArrayList<>();
-            if (threadCount == 3) {
-                int steps = stepsCount / 3;
-                threads.add(new CalculationThread(min, min + steps * step, step, rs));
-                threads.add(
-                        new CalculationThread(min + steps * step, min + steps * 2 * step, step,
-                                rs));
-                threads.add(new CalculationThread(min + steps * 2 * step, max, step, rs));
-            } else if (threadCount == 2) {
-                int steps = stepsCount / 2;
-                threads.add(new CalculationThread(min, min + steps * step, step, rs));
-                threads.add(new CalculationThread(min + steps * step, max, step, rs));
-            } else {
-                threads.add(new CalculationThread(min, max, step, rs));
+            if(server.getCountSockets() >= 3){
+                try {
+                    server.sendMessages(min,max,step);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+                double result;
+                try {
+                    result= server.getResults();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+                defaultTableModel.setValueAt(result,selectedRow, 3);
+                data.get(selectedRow).setDataByIndex(3, String.valueOf(result));
             }
-
-            threads.forEach(CalculationThread::start);
         }
     }
 
